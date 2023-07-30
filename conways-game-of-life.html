@@ -1,0 +1,400 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Game of Life</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <style>
+	html {
+		background-color: #aed683;
+	}
+	
+	body {
+		position: absolute;
+		top: 0px;
+		bottom: 0px;
+		left: 0px;
+		right: 0px;
+		margin: 0px;
+	}
+	
+	.mainFrame {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		align-items: center;
+		justify-content: center;
+	}
+	
+	.innerFrame {
+		display: inline-block;
+		flex-direction: column;
+	}
+	
+	.frameSquareContainer {
+		display: inline-block;
+		/*height: 800px;*/
+		/*width: 800px;*/
+		border: 1px solid black;
+		background-color: #c9dad4;
+	}
+	
+	.row {
+		display: flex;
+		flex-direction: row;
+	}
+	
+	.square {
+		width: 20px;
+		height: 20px;
+		border: 1px black solid;
+	}
+	
+	.square.on {
+		background-color: #ff0000;
+	}
+	
+	.square.off {
+	
+	}
+	
+	.bottomPanel {
+		position: absolute;
+		bottom: 0px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		left: 0px;
+		right: 0px;
+		padding: 20px;
+	}
+	
+	.startStopButton {
+		height: 30px;
+		width: 100px;
+		background-color: lightgray;
+		border: 1px solid black;
+		border-radius: 5px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+	}
+	
+	
+	
+  </style>
+</head>
+
+<body>
+	<div class="mainFrame">
+	<div class="innerFrame">
+	<div class="frameSquareContainer">
+	
+	</div>
+	</div>
+	</div>
+	<div class="bottomPanel">
+		<div class="startStopButton"><span>Start</span></div>
+	</div>
+
+
+  <script type="text/javascript" >
+	//alert("You just opened SQUARES!");
+	
+	var xColumnCount = 80;
+	var yRowCount = 34;
+	
+	//var matrix = 
+	
+	$( document ).ready(function() {
+		generateGrid();
+		
+		$(".startStopButton").off().on("click", function(event) {
+			
+			startStop();
+		});
+	});
+	
+	/*
+	function createMatrix() {
+		matrix = new Array(xColumnCount);
+
+		for (var i = 0; i < matrix.length; i++) {
+		  matrix[i] = new Array(yRowCount);
+		}
+	}
+	*/
+	
+	function DirectionEnumValues(xDelta, yDelta) {
+		this.xDelta = xDelta;
+		this.yDelta = yDelta;
+	}
+	
+	var directionEnum = {
+		right: new DirectionEnumValues(1, 0),
+		up: new DirectionEnumValues(0, -1),
+		left: new DirectionEnumValues(-1, 0),
+		down: new DirectionEnumValues(0, 1)
+	}
+	
+	//setTimeout(function() {
+	//setInterval(processFrame, 250);
+	//},10000);
+	
+	
+	function startStop() {
+		if (running) {
+			stop();
+			$(".startStopButton span").text("Start");
+		} else {
+			start();
+			$(".startStopButton span").text("Stop");
+		}
+	}
+	
+	var timeout = null;
+	var running = false;
+	
+	function start() {
+		if (timeout != null) {
+			stop();
+		}
+		running = true;
+		timeout = setTimeout(function() {
+			processFrame();
+			
+			timeout = null;
+			start();
+		},
+		1);
+	}
+	
+	function stop() {
+		if (timeout != null) {
+			clearTimeout(timeout);
+			timeout = null;
+		}
+		running = false;
+	}
+	
+	function generateGrid() {
+	
+		var frameSquareContainer = $(".frameSquareContainer")[0];
+	
+		for (var j = 0; j < yRowCount; j++) {
+		
+			var rowDiv = document.createElement("div");
+		
+			rowDiv.classList.add("row");
+		
+			for (var i = 0; i < xColumnCount; i++) {
+			
+				var squareDiv = document.createElement("div");
+				
+				squareDiv.classList.add("square");
+				
+				squareDiv.onclick = squareClickEventHandler;
+				
+				
+				squareDiv.setAttribute("data-x", i.toString());
+				squareDiv.setAttribute("data-y", j.toString());
+				
+				
+				rowDiv.appendChild(squareDiv);
+			}
+		
+			frameSquareContainer.appendChild(rowDiv);
+		}
+	}
+	
+	function squareClickEventHandler(event) {
+		var thisSquare = $(this);
+		
+		//this.style.backgroundColor = "#ff0000";
+		
+		
+		//var x = parseInt(this.getAttribute("data-x"));
+		//var y = parseInt(this.getAttribute("data-y"));
+		
+		
+		
+		toggleSquare(thisSquare);
+		
+		
+	}
+	
+	function toggleSquare(square) {
+		if (square.hasClass("on")) {
+			square.removeClass("on");
+			square.addClass("off");
+		} else {
+			square.removeClass("off");
+			square.addClass("on");
+		}
+	}
+	
+	
+	function processFrame() {
+		var startTime = Date.now();
+		
+		var markedSquares = $(".square.markForToggle");
+		markedSquares.each(function(index){toggleSquare($(this));});
+		markedSquares.removeClass("markForToggle");
+	
+		$(".square").removeAttr("data-neighbor-count");
+		
+		for (var j = 0; j < yRowCount; j++) {
+			for (var i = 0; i < xColumnCount; i++) {
+			
+				var square = $('.square[data-x="' + i + '"][data-y="' + j + '"]');
+				
+		
+				if (square.hasClass("on")) {
+				
+					//console.log("on");
+				
+					var x0 = parseInt(square.attr("data-x"));
+					var y0 = parseInt(square.attr("data-y"));
+				
+					for (var x = x0 - 1; x <= x0 + 1; x++) {
+						if (x >= 0 && x < xColumnCount) {
+							for (var y = y0 - 1; y <= y0 + 1; y++) {
+								if ((!(x == x0 && y == y0)) && y >= 0 && y < yRowCount) {
+									var neighborSquare = $('.square[data-x="' + x + '"][data-y="' + y + '"]');
+									
+									var neighborNeighborCount = 0;
+									var neighborNeighborCountAttr = neighborSquare.attr("data-neighbor-count");
+									if (neighborNeighborCountAttr != null) {
+										neighborNeighborCount = parseInt(neighborNeighborCountAttr);
+									}
+									neighborNeighborCount++;
+									
+									neighborSquare.attr("data-neighbor-count", neighborNeighborCount.toString());
+									
+									//neighborSquare.html(neighborNeighborCount.toString());
+									
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		for (var j = 0; j < yRowCount; j++) {
+			for (var i = 0; i < xColumnCount; i++) {
+			
+				var square = $('.square[data-x="' + i + '"][data-y="' + j + '"]');
+				
+				
+				var neighborCount = 0;
+				
+				var neighborCountAttr = square.attr("data-neighbor-count");
+				
+				if (neighborCountAttr != null) {
+					neighborCount = parseInt(neighborCountAttr);
+				} 
+				//else {
+				//	alert("NeighborCount not initialized!");
+				//	neighborCount = getNeighborCount(square);
+				//	square.attr("data-neighbor-count", neighborCount.toString());
+				//}
+				
+				//square.html(neighborCount.toString());
+				
+				if (square.hasClass("on")) {
+					if (neighborCount < 2 || neighborCount > 3) {
+						square.addClass("markForToggle");
+						//toggleSquare(square);
+					}
+				} else {
+					if (neighborCount == 3) {
+						square.addClass("markForToggle");
+						//toggleSquare(square);
+					}
+				}
+				
+			}
+		}
+		
+		/*
+		for (var j = 0; j < yRowCount; j++) {
+			for (var i = 0; i < xColumnCount; i++) {
+			
+				var square = $('.square[data-x="' + i + '"][data-y="' + j + '"]');
+				
+				if (square.hasClass("markForToggle")) {
+					toggleSquare(square);
+					square.removeClass("markForToggle");
+				}
+				
+				square.removeAttr("data-neighbor-count");
+			}
+		}
+		*/
+		
+		var endTime = Date.now();
+		
+		var processTime = endTime - startTime;
+		
+		console.log("frame time : " + processTime);
+	}
+	
+	function getNeighborCount(square) {
+		var count = 0;
+	
+		var x0 = parseInt(square.attr("data-x"));
+		var y0 = parseInt(square.attr("data-y"));
+		
+		for (var x = x0 - 1; x <= x0 + 1; x++) {
+			if (x >= 0 && x < xColumnCount) {
+				for (var y = y0 - 1; y <= y0 + 1; y++) {
+					if ((!(x == x0 && y == y0)) && y >= 0 && y < yRowCount) {
+						var neighborSquare = $('.square[data-x="' + x + '"][data-y="' + y + '"]');
+						if (neighborSquare.hasClass("on")) {
+							count++;
+						}
+					}
+				}
+			}
+		}
+		
+		return count;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	function paintNewPosition(snakeHead) {
+	
+		var x = snakeHead.x;
+		var y = snakeHead.y;
+	
+		var squareDiv = $(".square[data-x='" + x.toString() + "'][data-y='" + y.toString() + "']")[0];
+		
+		squareDiv.style.backgroundColor = "#ff0000";
+	}
+	
+	
+	function isSquareAlreadyPainted(x, y) {
+		var squareDiv = $(".square[data-x='" + x.toString() + "'][data-y='" + y.toString() + "']")[0];
+		console.log("squareDiv.style.backgroundColor: " + squareDiv.style.backgroundColor);
+		return (squareDiv.style.backgroundColor == "rgb(255, 0, 0)")
+	}
+	
+	
+  </script>
+</body>
+</html>
