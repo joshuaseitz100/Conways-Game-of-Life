@@ -45,8 +45,8 @@
 	}
 	
 	.square {
-		width: 20px;
-		height: 20px;
+		width: 16px;
+		height: 16px;
 		border: 1px black solid;
 	}
 	
@@ -106,13 +106,15 @@
 	var xColumnCount = 80;
 	var yRowCount = 34;
 	
-	//var matrix = 
+	var matrix = create2DArray(xColumnCount, yRowCount, 0);
+	var calculationMatrix = create2DArray(xColumnCount, yRowCount, 0);
 	
 	$( document ).ready(function() {
 		generateGrid();
 		
 		$(".startStopButton").off().on("click", function(event) {
-			
+		
+			loadMatrixFromGrid();
 			startStop();
 		});
 	});
@@ -162,6 +164,8 @@
 			stop();
 		}
 		running = true;
+		
+		
 		timeout = setTimeout(function() {
 			processFrame();
 			
@@ -209,6 +213,26 @@
 		}
 	}
 	
+	function loadMatrixFromGrid() { // matrix
+	
+		for (var j = 0; j < yRowCount; j++) {
+		
+			for (var i = 0; i < xColumnCount; i++) {
+				
+				
+				var square = $('.square[data-x="' + i + '"][data-y="' + j + '"]');
+				
+				var val = square.hasClass("on") ? 1 : 0;
+				
+				
+				matrix[i][j] = val;
+				
+				
+				
+			}
+		}
+	}
+	
 	function squareClickEventHandler(event) {
 		var thisSquare = $(this);
 		
@@ -235,105 +259,73 @@
 		}
 	}
 	
+	// matrix
+	// calculationMatrix
 	
 	function processFrame() {
 		var startTime = Date.now();
 		
-		var markedSquares = $(".square.markForToggle");
-		markedSquares.each(function(index){toggleSquare($(this));});
-		markedSquares.removeClass("markForToggle");
+	//	for (var j = 0; j < yRowCount; j++) {
+	//		for (var i = 0; i < xColumnCount; i++) {
+		
+		for (var j = 1; j < yRowCount - 1; j++) {
+			for (var i = 1; i < xColumnCount - 1; i++) {
+			
+				var count = 0;
+				
+				count = 0
+						+ matrix[i-1][j-1]
+						+ matrix[i+0][j-1]
+						+ matrix[i+1][j-1]
+						+ matrix[i-1][j+0]
+						+ matrix[i+1][j+0]
+						+ matrix[i-1][j+1]
+						+ matrix[i+0][j+1]
+						+ matrix[i+1][j+1];
+						
+				calculationMatrix[i][j] = count;
+				
+				
+			}
+		}
 	
-		$(".square").removeAttr("data-neighbor-count");
-		
-		for (var j = 0; j < yRowCount; j++) {
-			for (var i = 0; i < xColumnCount; i++) {
+		for (var j = 1; j < yRowCount - 1; j++) {
+			for (var i = 1; i < xColumnCount - 1; i++) {
 			
-				var square = $('.square[data-x="' + i + '"][data-y="' + j + '"]');
+			
+				var val = matrix[i][j];
+				var count = calculationMatrix[i][j];
 				
-		
-				if (square.hasClass("on")) {
-				
-					//console.log("on");
-				
-					var x0 = parseInt(square.attr("data-x"));
-					var y0 = parseInt(square.attr("data-y"));
-				
-					for (var x = x0 - 1; x <= x0 + 1; x++) {
-						if (x >= 0 && x < xColumnCount) {
-							for (var y = y0 - 1; y <= y0 + 1; y++) {
-								if ((!(x == x0 && y == y0)) && y >= 0 && y < yRowCount) {
-									var neighborSquare = $('.square[data-x="' + x + '"][data-y="' + y + '"]');
-									
-									var neighborNeighborCount = 0;
-									var neighborNeighborCountAttr = neighborSquare.attr("data-neighbor-count");
-									if (neighborNeighborCountAttr != null) {
-										neighborNeighborCount = parseInt(neighborNeighborCountAttr);
-									}
-									neighborNeighborCount++;
-									
-									neighborSquare.attr("data-neighbor-count", neighborNeighborCount.toString());
-									
-									//neighborSquare.html(neighborNeighborCount.toString());
-									
-								}
-							}
-						}
+				var newVal = 0;
+			
+				if (val === 1) {
+					
+					if (count === 2 || count === 3) {
+						newVal = 1;
+					}
+					
+				} else { // val === 0
+					
+					if (count === 3) {
+						newVal = 1;
 					}
 				}
-			}
-		}
-		
-		for (var j = 0; j < yRowCount; j++) {
-			for (var i = 0; i < xColumnCount; i++) {
 			
+				matrix[i][j] = newVal;
+			
+						
 				var square = $('.square[data-x="' + i + '"][data-y="' + j + '"]');
 				
-				
-				var neighborCount = 0;
-				
-				var neighborCountAttr = square.attr("data-neighbor-count");
-				
-				if (neighborCountAttr != null) {
-					neighborCount = parseInt(neighborCountAttr);
-				} 
-				//else {
-				//	alert("NeighborCount not initialized!");
-				//	neighborCount = getNeighborCount(square);
-				//	square.attr("data-neighbor-count", neighborCount.toString());
-				//}
-				
-				//square.html(neighborCount.toString());
-				
-				if (square.hasClass("on")) {
-					if (neighborCount < 2 || neighborCount > 3) {
-						square.addClass("markForToggle");
-						//toggleSquare(square);
-					}
+				if (newVal === 0) {
+					square.removeClass("on");
 				} else {
-					if (neighborCount == 3) {
-						square.addClass("markForToggle");
-						//toggleSquare(square);
-					}
+					square.addClass("on");
 				}
+				
 				
 			}
 		}
-		
-		/*
-		for (var j = 0; j < yRowCount; j++) {
-			for (var i = 0; i < xColumnCount; i++) {
-			
-				var square = $('.square[data-x="' + i + '"][data-y="' + j + '"]');
-				
-				if (square.hasClass("markForToggle")) {
-					toggleSquare(square);
-					square.removeClass("markForToggle");
-				}
-				
-				square.removeAttr("data-neighbor-count");
-			}
-		}
-		*/
+	
 		
 		var endTime = Date.now();
 		
@@ -341,6 +333,7 @@
 		
 		console.log("frame time : " + processTime);
 	}
+	
 	
 	function getNeighborCount(square) {
 		var count = 0;
@@ -366,17 +359,6 @@
 	
 	
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	function paintNewPosition(snakeHead) {
 	
 		var x = snakeHead.x;
@@ -392,6 +374,15 @@
 		var squareDiv = $(".square[data-x='" + x.toString() + "'][data-y='" + y.toString() + "']")[0];
 		console.log("squareDiv.style.backgroundColor: " + squareDiv.style.backgroundColor);
 		return (squareDiv.style.backgroundColor == "rgb(255, 0, 0)")
+	}
+	
+	
+	function create2DArray(rows, cols, initialValue = 0) {
+	  const arr = new Array(rows);
+	  for (let i = 0; i < rows; i++) {
+	    arr[i] = new Array(cols).fill(initialValue);
+	  }
+	  return arr;
 	}
 	
 	
